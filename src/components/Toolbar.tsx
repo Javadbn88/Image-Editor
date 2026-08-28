@@ -45,7 +45,7 @@ const Toolbar = ({
   };
 
   const handleAddByUrl = () => {
-    const url = window.prompt("لینک عکس رو وارد کن:");
+    const url = window.prompt("Enter image link:");
     if (url) onAddImageFromUrl(url);
     setShowImageMenu(false);
   };
@@ -190,7 +190,6 @@ const Toolbar = ({
           </button>
         </div>
 
-        {/* Shapes Panel */}
         <div
           className={`
             absolute left-[60px] top-0 w-44
@@ -207,7 +206,6 @@ const Toolbar = ({
             }
           `}
         >
-          {/* Header */}
           <div className="px-3 pb-2 pt-1">
             <p className="text-xs font-medium text-zinc-500">
               Add Shape

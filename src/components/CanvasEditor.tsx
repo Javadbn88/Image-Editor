@@ -138,7 +138,7 @@ const CanvasEditor = () => {
       editor.canvas.add(image);
       editor.canvas.renderAll();
     } catch (error) {
-      console.error('بارگذاری عکس با خطا مواجه شد:', error);
+      console.error('Error', error);
     }
   };
 
