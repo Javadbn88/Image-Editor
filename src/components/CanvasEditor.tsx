@@ -124,6 +124,34 @@ const CanvasEditor = () => {
     editor.canvas.renderAll();
   };
 
+  const addImageFromUrl = async (url: string) => {
+    if (!editor) return;
+
+    try {
+      const image = await fabric.FabricImage.fromURL(url, {
+        crossOrigin: 'anonymous',
+      });
+
+      image.scaleToWidth(200);
+      image.set({ left: 100, top: 100 });
+
+      editor.canvas.add(image);
+      editor.canvas.renderAll();
+    } catch (error) {
+      console.error('بارگذاری عکس با خطا مواجه شد:', error);
+    }
+  };
+
+  const addImageFromFile = (file: File) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      addImageFromUrl(reader.result as string);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
   const deleteSelected = () => {
     if (!editor) return;
 
@@ -146,6 +174,8 @@ const CanvasEditor = () => {
         onAddEllipse={addEllipse}
         onAddLine={addLine}
         onAddStar={addStar}
+        onAddImageFromFile={addImageFromFile}
+        onAddImageFromUrl={addImageFromUrl}
       />
 
       <FabricJSCanvas
