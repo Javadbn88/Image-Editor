@@ -3,14 +3,14 @@ import * as fabric from 'fabric';
 import Toolbar from './Toolbar';
 import Header from './Header';
 import PropertiesPanel from './PropertiesPanel';
-import { useCanvasSelection } from '../components/hooks/useCanvasSelection';
-import { useCanvasHistory } from '../components/hooks/useCanvasHistory';
-import { useResponsiveCanvas } from '../components/hooks/useResponsiveCanvas';
-import { useShapeTools } from '../components/hooks/useShapeTools';
-import { useImageTools } from '../components/hooks/useImageTools';
-import { useObjectActions } from '../components/hooks/useObjectActions';
-import { useKeyboardShortcuts } from '../components/hooks/useKeyboardShortcuts';
-import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../components/lib/canvas-constants';
+import { useCanvasSelection } from '../hooks/useCanvasSelection';
+import { useCanvasHistory } from '../hooks/useCanvasHistory';
+import { useResponsiveCanvas } from '../hooks/useResponsiveCanvas';
+import { useShapeTools } from '../hooks/useShapeTools';
+import { useImageTools } from '../hooks/useImageTools';
+import { useObjectActions } from '../hooks/useObjectActions';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../lib/canvas-constants';
 
 const CanvasEditor = () => {
   const { editor, onReady } = useFabricJSEditor();
