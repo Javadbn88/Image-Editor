@@ -87,9 +87,7 @@ const Toolbar = ({
     setShowImageMenu(false);
   };
 
-  const handleFileSelected = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (file) {
@@ -103,10 +101,11 @@ const Toolbar = ({
     "group relative flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-xl text-zinc-400 transition-all duration-200 hover:bg-zinc-800/80 hover:text-white active:scale-90 active:bg-zinc-800/80 active:text-white touch-manipulation disabled:opacity-30 disabled:pointer-events-none";
 
   const shapeButton =
-    "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition-all duration-150 hover:bg-zinc-800/80 hover:text-white active:scale-[0.98] touch-manipulation";
+    "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition-all duration-150 hover:bg-zinc-800/80 hover:text-white active:scale-[0.98] active:bg-zinc-800/60 touch-manipulation";
 
+  // Improved tooltip: appears faster, better positioning, subtle scale
   const tooltipClass =
-    "pointer-events-none absolute hidden sm:block left-12 whitespace-nowrap rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-200 opacity-0 shadow-lg transition-all duration-150 group-hover:translate-x-1 group-hover:opacity-100";
+    "pointer-events-none absolute hidden sm:flex items-center left-12 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg border border-zinc-700/90 bg-zinc-900/95 px-2.5 py-1.5 text-xs font-medium text-zinc-100 opacity-0 shadow-lg shadow-black/40 backdrop-blur-sm transition-all duration-150 ease-out group-hover:translate-x-1 group-hover:opacity-100 scale-95 group-hover:scale-100";
 
   const menuBase =
     "absolute w-56 max-w-[88vw] origin-bottom sm:origin-left rounded-2xl border border-zinc-800/80 bg-zinc-950/95 p-2 shadow-[0_16px_50px_rgba(0,0,0,0.4)] backdrop-blur-sm transition-all duration-200 ease-out left-1/2 -translate-x-1/2 bottom-[64px] sm:bottom-auto sm:left-[60px] sm:translate-x-0";
@@ -121,7 +120,7 @@ const Toolbar = ({
     <>
       {anyMenuOpen && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-40 bg-black/20 sm:bg-transparent"
           onClick={closeAllMenus}
           aria-hidden="true"
         />
@@ -155,6 +154,7 @@ const Toolbar = ({
                 showShapes ? "bg-zinc-800 text-white shadow-inner" : ""
               }`}
               aria-label="Shapes"
+              title="Shapes"
             >
               <Shapes size={21} strokeWidth={1.8} />
               {!showShapes && <span className={tooltipClass}>Shapes</span>}
@@ -171,6 +171,7 @@ const Toolbar = ({
                 showImageMenu ? "bg-zinc-800 text-white shadow-inner" : ""
               }`}
               aria-label="Add image"
+              title="Add image"
             >
               <Image size={21} strokeWidth={1.8} />
               {!showImageMenu && <span className={tooltipClass}>Image</span>}
@@ -187,6 +188,7 @@ const Toolbar = ({
                 showTextMenu ? "bg-zinc-800 text-white shadow-inner" : ""
               }`}
               aria-label="Add text"
+              title="Add text"
             >
               <Text size={21} strokeWidth={1.8} />
               {!showTextMenu && <span className={tooltipClass}>Text</span>}
@@ -200,6 +202,7 @@ const Toolbar = ({
               disabled={!canUndo}
               className={toolButton}
               aria-label="Undo"
+              title="Undo (Ctrl+Z)"
             >
               <Undo size={21} strokeWidth={1.8} />
               <span className={tooltipClass}>Undo</span>
@@ -211,12 +214,14 @@ const Toolbar = ({
               disabled={!canRedo}
               className={toolButton}
               aria-label="Redo"
+              title="Redo (Ctrl+Y)"
             >
               <Redo size={21} strokeWidth={1.8} />
               <span className={tooltipClass}>Redo</span>
             </button>
           </div>
 
+          {/* Shapes menu */}
           <div className={`${menuBase} sm:top-0 ${showShapes ? menuOpen : menuClosed}`}>
             <div className="px-3 pb-2 pt-1">
               <p className="text-xs font-medium text-zinc-500">Add Shape</p>
@@ -295,6 +300,7 @@ const Toolbar = ({
             </button>
           </div>
 
+          {/* Image menu */}
           <div
             className={`${menuBase} sm:top-[52px] w-60 ${
               showImageMenu ? menuOpen : menuClosed
@@ -336,6 +342,7 @@ const Toolbar = ({
             ))}
           </div>
 
+          {/* Text menu */}
           <div
             className={`${menuBase} sm:top-[104px] ${
               showTextMenu ? menuOpen : menuClosed
