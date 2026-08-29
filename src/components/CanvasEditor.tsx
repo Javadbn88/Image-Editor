@@ -1,4 +1,5 @@
 import { FabricJSCanvas, useFabricJSEditor } from 'fabricjs-react';
+import { useEffect, useState } from 'react';
 import * as fabric from 'fabric';
 import Toolbar from './Toolbar';
 import Header from './Header';
@@ -8,6 +9,11 @@ const CANVAS_HEIGHT = 500;
 
 const CanvasEditor = () => {
   const { editor, onReady } = useFabricJSEditor();
+  const [displaySize, setDisplaySize] = useState({
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
+    offsetY: 0,
+  });
 
   const handleReady = (canvas: fabric.Canvas) => {
     canvas.setDimensions({ width: CANVAS_WIDTH, height: CANVAS_HEIGHT });
@@ -163,9 +169,112 @@ const CanvasEditor = () => {
     editor.canvas.renderAll();
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const activeObject = editor?.canvas.getActiveObject();
+        if ((activeObject as any)?.isEditing) return;
+
+        deleteSelected();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editor]);
+
+  // Keep the canvas' on-screen size in sync with the viewport, without ever
+  // touching its internal 800x500 working resolution. We resize the CSS
+  // box only ("cssOnly"), which fabric.js automatically accounts for when
+  // translating pointer/touch coordinates — so drawing, dragging and
+  // resizing stay perfectly accurate at any screen size.
+  useEffect(() => {
+    if (!editor) return;
+    const canvas = editor.canvas;
+
+    const recalc = () => {
+      const isMobile = window.innerWidth < 640;
+
+      // Reserve space so the canvas never sits under the fixed header
+      // or the fixed toolbar.
+      const headerSpace = isMobile ? 76 : 96; // top header + margin
+      const dockSpace = isMobile ? 96 : 32; // bottom mobile dock / bottom margin
+      const sideSpace = isMobile ? 24 : 220; // side padding / desktop left sidebar
+
+      const availableWidth = Math.max(240, window.innerWidth - sideSpace);
+      const availableHeight = Math.max(
+        180,
+        window.innerHeight - headerSpace - dockSpace
+      );
+
+      const scale = Math.min(
+        1,
+        availableWidth / CANVAS_WIDTH,
+        availableHeight / CANVAS_HEIGHT
+      );
+
+      const width = Math.round(CANVAS_WIDTH * scale);
+      const height = Math.round(CANVAS_HEIGHT * scale);
+
+      // Nudge the canvas toward the middle of the free space between the
+      // header and the dock/bottom edge, so it's not thrown off-center by
+      // the two reserved areas being different sizes.
+      const offsetY = Math.round((headerSpace - dockSpace) / 2);
+
+      canvas.setDimensions({ width, height }, { cssOnly: true });
+      canvas.calcOffset();
+      canvas.requestRenderAll();
+
+      setDisplaySize({ width, height, offsetY });
+    };
+
+    recalc();
+    window.addEventListener('resize', recalc);
+    window.addEventListener('orientationchange', recalc);
+    return () => {
+      window.removeEventListener('resize', recalc);
+      window.removeEventListener('orientationchange', recalc);
+    };
+  }, [editor]);
+
+  const exportImage = () => {
+    if (!editor) return;
+
+    const dataUrl = editor.canvas.toDataURL({
+      format: 'png',
+      quality: 1,
+      multiplier: 1,
+    });
+
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = 'image-editor-export.png';
+    link.click();
+  };
+
+  const addText = () => {
+    if (!editor) return;
+
+    const text = new fabric.Textbox('New text...', {
+      left: 100,
+      top: 100,
+      width: 200,
+      fontSize: 24,
+      fill: '#ffffff',
+      editable: true,
+    });
+
+    editor.canvas.add(text);
+    editor.canvas.setActiveObject(text);
+    editor.canvas.renderAll();
+
+    text.enterEditing();
+    text.selectAll();
+  };
+
   return (
-    <div className="flex flex-col items-center gap-6">
-      <Header onDelete={deleteSelected} />
+    <div className="flex flex-col items-center gap-6 w-full px-4">
+      <Header onDelete={deleteSelected} onExport={exportImage} />
 
       <Toolbar
         onAddSquare={addSquare}
@@ -176,12 +285,21 @@ const CanvasEditor = () => {
         onAddStar={addStar}
         onAddImageFromFile={addImageFromFile}
         onAddImageFromUrl={addImageFromUrl}
+        onAddText={addText}
       />
 
-      <FabricJSCanvas
-        className="border-2 border-gray-800 shadow-xl bg-black"
-        onReady={handleReady}
-      />
+      <div
+        style={{
+          width: displaySize.width,
+          height: displaySize.height,
+          marginTop: displaySize.offsetY,
+        }}
+      >
+        <FabricJSCanvas
+          className="border-2 border-gray-800 shadow-xl bg-black touch-none"
+          onReady={handleReady}
+        />
+      </div>
     </div>
   );
 };
