@@ -1,11 +1,15 @@
-import { Trash2, Download } from "lucide-react";
+// Header.tsx
+import { Trash2, Download, FilePlus2, PaintBucket } from "lucide-react";
 
 interface HeaderProps {
   onDelete: () => void;
   onExport: () => void;
+  onNewCanvas: () => void;
+  bgColor: string;
+  onBgColorChange: (color: string) => void;
 }
 
-const Header = ({ onDelete, onExport }: HeaderProps) => {
+const Header = ({ onDelete, onExport, onNewCanvas, bgColor, onBgColorChange }: HeaderProps) => {
   return (
     <header
       className="
@@ -26,11 +30,59 @@ const Header = ({ onDelete, onExport }: HeaderProps) => {
         </span>
       </div>
 
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end gap-0.5">
+        <button
+          type="button"
+          onClick={onNewCanvas}
+          aria-label="New canvas"
+          className="
+            group flex h-9 w-9 items-center justify-center
+            rounded-xl
+            text-zinc-500
+            transition-all duration-200
+            hover:bg-zinc-500/10
+            hover:text-zinc-300
+            active:scale-90
+            touch-manipulation
+          "
+        >
+          <FilePlus2
+            size={18}
+            strokeWidth={1.8}
+            className="transition-transform duration-200 group-hover:scale-105"
+          />
+        </button>
+
+        <label
+          className="
+            group relative flex h-9 w-9 cursor-pointer items-center justify-center
+            rounded-xl
+            text-zinc-500
+            transition-all duration-200
+            hover:bg-zinc-500/10
+            hover:text-zinc-300
+            active:scale-90
+            touch-manipulation
+          "
+          aria-label="Canvas background color"
+        >
+          <PaintBucket
+            size={18}
+            strokeWidth={1.8}
+            className="transition-transform duration-200 group-hover:scale-105"
+          />
+          <input
+            type="color"
+            value={bgColor}
+            onChange={(e) => onBgColorChange(e.target.value)}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          />
+        </label>
+
         <button
           type="button"
           onClick={onDelete}
-          aria-label="Delete all objects"
+          aria-label="Delete selected"
           className="
             group flex h-9 w-9 items-center justify-center
             rounded-xl
