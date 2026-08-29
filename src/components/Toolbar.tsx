@@ -8,6 +8,7 @@ import {
   Minus,
   Star,
   Image,
+  Text,
   Undo,
   Redo,
   Upload,
@@ -21,6 +22,7 @@ interface ToolbarProps {
   onAddEllipse: () => void;
   onAddLine: () => void;
   onAddStar: () => void;
+  onAddText: () => void;
   onAddImageFromFile: (file: File) => void;
   onAddImageFromUrl: (url: string) => void;
 }
@@ -32,12 +34,21 @@ const Toolbar = ({
   onAddEllipse,
   onAddLine,
   onAddStar,
+  onAddText,
   onAddImageFromFile,
   onAddImageFromUrl,
 }: ToolbarProps) => {
   const [showShapes, setShowShapes] = useState(false);
   const [showImageMenu, setShowImageMenu] = useState(false);
+  const [showTextMenu, setShowTextMenu] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const closeAllMenus = () => {
+    setShowShapes(false);
+    setShowImageMenu(false);
+    setShowTextMenu(false);
+  };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -46,28 +57,65 @@ const Toolbar = ({
 
   const handleAddByUrl = () => {
     const url = window.prompt("Enter image link:");
-    if (url) onAddImageFromUrl(url);
+
+    if (url) {
+      onAddImageFromUrl(url);
+    }
+
     setShowImageMenu(false);
   };
 
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelected = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
-    if (file) onAddImageFromFile(file);
+
+    if (file) {
+      onAddImageFromFile(file);
+    }
+
     e.target.value = "";
   };
 
   const toolButton =
-    "group relative flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all duration-200 hover:bg-zinc-800/80 hover:text-white active:scale-90";
+    "group relative flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-xl text-zinc-400 transition-all duration-200 hover:bg-zinc-800/80 hover:text-white active:scale-90 active:bg-zinc-800/80 active:text-white touch-manipulation";
 
   const shapeButton =
-    "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition-all duration-150 hover:bg-zinc-800/80 hover:text-white active:scale-[0.98]";
+    "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition-all duration-150 hover:bg-zinc-800/80 hover:text-white active:scale-[0.98] touch-manipulation";
+
+  const tooltipClass =
+    "pointer-events-none absolute hidden sm:block left-12 whitespace-nowrap rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-200 opacity-0 shadow-lg transition-all duration-150 group-hover:translate-x-1 group-hover:opacity-100";
+
+  const menuBase =
+    "absolute w-56 max-w-[88vw] origin-bottom sm:origin-left rounded-2xl border border-zinc-800/80 bg-zinc-950/95 p-2 shadow-[0_16px_50px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-200 ease-out left-1/2 -translate-x-1/2 bottom-[64px] sm:bottom-auto sm:left-[60px] sm:translate-x-0";
+
+  const menuOpen = "translate-y-0 sm:translate-x-0 scale-100 opacity-100";
+  const menuClosed =
+    "pointer-events-none translate-y-2 sm:translate-y-0 sm:-translate-x-2 scale-95 opacity-0";
+
+  const anyMenuOpen = showShapes || showImageMenu || showTextMenu;
 
   return (
-    <div className="fixed left-5 top-1/2 z-50 -translate-y-1/2">
+    <>
+      {anyMenuOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={closeAllMenus}
+          aria-hidden="true"
+        />
+      )}
+
+      <div
+        className="
+          fixed z-50
+          bottom-4 left-1/2 -translate-x-1/2
+          sm:bottom-auto sm:left-5 sm:top-1/2 sm:-translate-x-0 sm:-translate-y-1/2
+        "
+      >
       <div className="relative">
         <div
           className="
-            flex w-[52px] flex-col items-center gap-1
+            flex flex-row sm:flex-col items-center gap-1
             rounded-2xl border border-zinc-800/80
             bg-zinc-950/95 p-1.5
             shadow-[0_12px_40px_rgba(0,0,0,0.35)]
@@ -79,144 +127,73 @@ const Toolbar = ({
             onClick={() => {
               setShowShapes((prev) => !prev);
               setShowImageMenu(false);
+              setShowTextMenu(false);
             }}
             className={`${toolButton} ${
-              showShapes
-                ? "bg-zinc-800 text-white shadow-inner"
-                : ""
+              showShapes ? "bg-zinc-800 text-white shadow-inner" : ""
             }`}
             aria-label="Shapes"
           >
             <Shapes size={21} strokeWidth={1.8} />
-
-            {!showShapes && (
-              <span
-                className="
-                  pointer-events-none absolute left-12
-                  whitespace-nowrap rounded-lg
-                  border border-zinc-800
-                  bg-zinc-900 px-2.5 py-1.5
-                  text-xs text-zinc-200
-                  opacity-0 shadow-lg
-                  transition-all duration-150
-                  group-hover:translate-x-1 group-hover:opacity-100
-                "
-              >
-                Shapes
-              </span>
-            )}
+            {!showShapes && <span className={tooltipClass}>Shapes</span>}
           </button>
 
-          {/* Image */}
           <button
             type="button"
             onClick={() => {
               setShowImageMenu((prev) => !prev);
               setShowShapes(false);
+              setShowTextMenu(false);
             }}
             className={`${toolButton} ${
-              showImageMenu
-                ? "bg-zinc-800 text-white shadow-inner"
-                : ""
+              showImageMenu ? "bg-zinc-800 text-white shadow-inner" : ""
             }`}
             aria-label="Add image"
           >
             <Image size={21} strokeWidth={1.8} />
-
-            {!showImageMenu && (
-              <span
-                className="
-                  pointer-events-none absolute left-12
-                  whitespace-nowrap rounded-lg
-                  border border-zinc-800
-                  bg-zinc-900 px-2.5 py-1.5
-                  text-xs text-zinc-200
-                  opacity-0 shadow-lg
-                  transition-all duration-150
-                  group-hover:translate-x-1 group-hover:opacity-100
-                "
-              >
-                Image
-              </span>
-            )}
+            {!showImageMenu && <span className={tooltipClass}>Image</span>}
           </button>
-
-          <div className="my-1 h-px w-7 bg-zinc-800" />
 
           <button
             type="button"
-            className={toolButton}
-            aria-label="Undo"
+            onClick={() => {
+              setShowTextMenu((prev) => !prev);
+              setShowShapes(false);
+              setShowImageMenu(false);
+            }}
+            className={`${toolButton} ${
+              showTextMenu ? "bg-zinc-800 text-white shadow-inner" : ""
+            }`}
+            aria-label="Add text"
           >
+            <Text size={21} strokeWidth={1.8} />
+            {!showTextMenu && <span className={tooltipClass}>Text</span>}
+          </button>
+
+          <div className="mx-1 sm:mx-0 sm:my-1 h-7 w-px sm:h-px sm:w-7 bg-zinc-800" />
+
+          <button type="button" className={toolButton} aria-label="Undo">
             <Undo size={21} strokeWidth={1.8} />
-
-            <span
-              className="
-                pointer-events-none absolute left-12
-                whitespace-nowrap rounded-lg
-                border border-zinc-800
-                bg-zinc-900 px-2.5 py-1.5
-                text-xs text-zinc-200
-                opacity-0 shadow-lg
-                transition-all duration-150
-                group-hover:translate-x-1 group-hover:opacity-100
-              "
-            >
-              Undo
-            </span>
+            <span className={tooltipClass}>Undo</span>
           </button>
 
-          <button
-            type="button"
-            className={toolButton}
-            aria-label="Redo"
-          >
+          <button type="button" className={toolButton} aria-label="Redo">
             <Redo size={21} strokeWidth={1.8} />
-
-            <span
-              className="
-                pointer-events-none absolute left-12
-                whitespace-nowrap rounded-lg
-                border border-zinc-800
-                bg-zinc-900 px-2.5 py-1.5
-                text-xs text-zinc-200
-                opacity-0 shadow-lg
-                transition-all duration-150
-                group-hover:translate-x-1 group-hover:opacity-100
-              "
-            >
-              Redo
-            </span>
+            <span className={tooltipClass}>Redo</span>
           </button>
         </div>
 
-        <div
-          className={`
-            absolute left-[60px] top-0 w-44
-            origin-left
-            rounded-2xl border border-zinc-800/80
-            bg-zinc-950/95 p-2
-            shadow-[0_16px_50px_rgba(0,0,0,0.4)]
-            backdrop-blur-xl
-            transition-all duration-200 ease-out
-            ${
-              showShapes
-                ? "translate-x-0 scale-100 opacity-100"
-                : "pointer-events-none -translate-x-2 scale-95 opacity-0"
-            }
-          `}
-        >
+        {/* Shapes menu */}
+        <div className={`${menuBase} sm:top-0 ${showShapes ? menuOpen : menuClosed}`}>
           <div className="px-3 pb-2 pt-1">
-            <p className="text-xs font-medium text-zinc-500">
-              Add Shape
-            </p>
+            <p className="text-xs font-medium text-zinc-500">Add Shape</p>
           </div>
 
           <button
             type="button"
             onClick={() => {
               onAddSquare();
-              setShowShapes(false);
+              closeAllMenus();
             }}
             className={shapeButton}
           >
@@ -228,7 +205,7 @@ const Toolbar = ({
             type="button"
             onClick={() => {
               onAddCircle();
-              setShowShapes(false);
+              closeAllMenus();
             }}
             className={shapeButton}
           >
@@ -240,7 +217,7 @@ const Toolbar = ({
             type="button"
             onClick={() => {
               onAddTriangle();
-              setShowShapes(false);
+              closeAllMenus();
             }}
             className={shapeButton}
           >
@@ -252,7 +229,7 @@ const Toolbar = ({
             type="button"
             onClick={() => {
               onAddEllipse();
-              setShowShapes(false);
+              closeAllMenus();
             }}
             className={shapeButton}
           >
@@ -264,7 +241,7 @@ const Toolbar = ({
             type="button"
             onClick={() => {
               onAddStar();
-              setShowShapes(false);
+              closeAllMenus();
             }}
             className={shapeButton}
           >
@@ -276,7 +253,7 @@ const Toolbar = ({
             type="button"
             onClick={() => {
               onAddLine();
-              setShowShapes(false);
+              closeAllMenus();
             }}
             className={shapeButton}
           >
@@ -285,44 +262,46 @@ const Toolbar = ({
           </button>
         </div>
 
+        {/* Image menu */}
         <div
-          className={`
-            absolute left-[60px] top-[52px] w-60
-            origin-left
-            rounded-2xl border border-zinc-800/80
-            bg-zinc-950/95 p-2
-            shadow-[0_16px_50px_rgba(0,0,0,0.4)]
-            backdrop-blur-xl
-            transition-all duration-200 ease-out
-            ${
-              showImageMenu
-                ? "translate-x-0 scale-100 opacity-100"
-                : "pointer-events-none -translate-x-2 scale-95 opacity-0"
-            }
-          `}
+          className={`${menuBase} sm:top-[52px] ${
+            showImageMenu ? menuOpen : menuClosed
+          }`}
         >
           <div className="px-3 pb-2 pt-1">
-            <p className="text-xs font-medium text-zinc-500">
-              Add Image
-            </p>
+            <p className="text-xs font-medium text-zinc-500">Add Image</p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleUploadClick}
-            className={shapeButton}
-          >
+          <button type="button" onClick={handleUploadClick} className={shapeButton}>
             <Upload size={19} strokeWidth={1.8} />
             <span>Upload from your device</span>
           </button>
 
-          <button
-            type="button"
-            onClick={handleAddByUrl}
-            className={shapeButton}
-          >
+          <button type="button" onClick={handleAddByUrl} className={shapeButton}>
             <Link size={19} strokeWidth={1.8} />
             <span>Upload with link</span>
+          </button>
+        </div>
+
+        <div
+          className={`${menuBase} sm:top-[104px] ${
+            showTextMenu ? menuOpen : menuClosed
+          }`}
+        >
+          <div className="px-3 pb-2 pt-1">
+            <p className="text-xs font-medium text-zinc-500">Add Text</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              onAddText();
+              closeAllMenus();
+            }}
+            className={shapeButton}
+          >
+            <Text size={19} strokeWidth={1.8} />
+            <span>Add text</span>
           </button>
         </div>
 
@@ -334,7 +313,8 @@ const Toolbar = ({
           className="hidden"
         />
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
