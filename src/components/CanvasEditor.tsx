@@ -1,11 +1,43 @@
+// CanvasEditor.tsx
 import { FabricJSCanvas, useFabricJSEditor } from 'fabricjs-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import Toolbar from './Toolbar';
+import type { ImageShape } from './Toolbar';
 import Header from './Header';
+import PropertiesPanel from './PropertiesPanel';
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 500;
+const STORAGE_KEY = 'image-editor-project-v1';
+const HISTORY_LIMIT = 50;
+
+const buildImageClipPath = (
+  shape: ImageShape,
+  obj: fabric.FabricImage
+): fabric.Object | undefined => {
+  const size = Math.min(obj.width, obj.height);
+
+  switch (shape) {
+    case 'rounded':
+      return new fabric.Rect({
+        width: obj.width,
+        height: obj.height,
+        rx: size * 0.15,
+        ry: size * 0.15,
+        originX: 'center',
+        originY: 'center',
+      });
+    case 'circle':
+      return new fabric.Circle({
+        radius: size / 2,
+        originX: 'center',
+        originY: 'center',
+      });
+    default:
+      return undefined;
+  }
+};
 
 const CanvasEditor = () => {
   const { editor, onReady } = useFabricJSEditor();
@@ -15,9 +47,72 @@ const CanvasEditor = () => {
     offsetY: 0,
   });
 
+  const [selected, setSelected] = useState<fabric.Object | null>(null);
+  const [selectionTick, setSelectionTick] = useState(0);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+  const [bgColor, setBgColor] = useState('#000000');
+
+  const historyRef = useRef<{ stack: string[]; index: number }>({
+    stack: [],
+    index: -1,
+  });
+  const isRestoringRef = useRef(false);
+  const clipboardRef = useRef<fabric.Object | null>(null);
+  const nudgeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleReady = (canvas: fabric.Canvas) => {
     canvas.setDimensions({ width: CANVAS_WIDTH, height: CANVAS_HEIGHT });
     onReady(canvas);
+  };
+
+  const pushHistory = () => {
+    if (!editor || isRestoringRef.current) return;
+    const json = JSON.stringify(editor.canvas.toJSON());
+    const h = historyRef.current;
+    const trimmed = h.stack.slice(0, h.index + 1);
+    trimmed.push(json);
+    h.stack = trimmed.slice(-HISTORY_LIMIT);
+    h.index = h.stack.length - 1;
+    setCanUndo(h.index > 0);
+    setCanRedo(false);
+    try {
+      localStorage.setItem(STORAGE_KEY, json);
+    } catch {}
+  };
+
+  const restoreFromHistory = (index: number) => {
+    if (!editor) return;
+    const json = historyRef.current.stack[index];
+    if (json === undefined) return;
+
+    isRestoringRef.current = true;
+    editor.canvas.loadFromJSON(JSON.parse(json)).then(() => {
+      editor.canvas.requestRenderAll();
+      isRestoringRef.current = false;
+      setCanUndo(historyRef.current.index > 0);
+      setCanRedo(historyRef.current.index < historyRef.current.stack.length - 1);
+      setSelected(editor.canvas.getActiveObject() ?? null);
+      setSelectionTick((t) => t + 1);
+      setBgColor((editor.canvas.backgroundColor as string) || '#000000');
+      try {
+        localStorage.setItem(STORAGE_KEY, json);
+      } catch {}
+    });
+  };
+
+  const undo = () => {
+    const h = historyRef.current;
+    if (h.index <= 0) return;
+    h.index -= 1;
+    restoreFromHistory(h.index);
+  };
+
+  const redo = () => {
+    const h = historyRef.current;
+    if (h.index >= h.stack.length - 1) return;
+    h.index += 1;
+    restoreFromHistory(h.index);
   };
 
   const addSquare = () => {
@@ -33,6 +128,7 @@ const CanvasEditor = () => {
     });
 
     editor.canvas.add(square);
+    editor.canvas.setActiveObject(square);
     editor.canvas.renderAll();
   };
 
@@ -50,6 +146,7 @@ const CanvasEditor = () => {
     });
 
     editor.canvas.add(circle);
+    editor.canvas.setActiveObject(circle);
     editor.canvas.renderAll();
   };
 
@@ -68,6 +165,7 @@ const CanvasEditor = () => {
     });
 
     editor.canvas.add(triangle);
+    editor.canvas.setActiveObject(triangle);
     editor.canvas.renderAll();
   };
 
@@ -86,6 +184,7 @@ const CanvasEditor = () => {
     });
 
     editor.canvas.add(ellipse);
+    editor.canvas.setActiveObject(ellipse);
     editor.canvas.renderAll();
   };
 
@@ -99,6 +198,7 @@ const CanvasEditor = () => {
     });
 
     editor.canvas.add(line);
+    editor.canvas.setActiveObject(line);
     editor.canvas.renderAll();
   };
 
@@ -127,6 +227,7 @@ const CanvasEditor = () => {
       transparentCorners: false,
     });
     editor.canvas.add(star);
+    editor.canvas.setActiveObject(star);
     editor.canvas.renderAll();
   };
 
@@ -142,6 +243,7 @@ const CanvasEditor = () => {
       image.set({ left: 100, top: 100 });
 
       editor.canvas.add(image);
+      editor.canvas.setActiveObject(image);
       editor.canvas.renderAll();
     } catch (error) {
       console.error('Error', error);
@@ -158,6 +260,18 @@ const CanvasEditor = () => {
     reader.readAsDataURL(file);
   };
 
+  const setImageShape = (shape: ImageShape) => {
+    if (!editor) return;
+
+    const obj = editor.canvas.getActiveObject();
+    if (!obj || obj.type !== 'image') return;
+
+    obj.clipPath = buildImageClipPath(shape, obj as fabric.FabricImage);
+    obj.dirty = true;
+    editor.canvas.requestRenderAll();
+    pushHistory();
+  };
+
   const deleteSelected = () => {
     if (!editor) return;
 
@@ -169,13 +283,146 @@ const CanvasEditor = () => {
     editor.canvas.renderAll();
   };
 
+  const duplicateSelected = () => {
+    if (!editor) return;
+    const active = editor.canvas.getActiveObject();
+    if (!active) return;
+
+    active.clone().then((cloned: fabric.Object) => {
+      cloned.set({
+        left: (active.left ?? 0) + 24,
+        top: (active.top ?? 0) + 24,
+      });
+      editor.canvas.add(cloned);
+      editor.canvas.setActiveObject(cloned);
+      editor.canvas.requestRenderAll();
+    });
+  };
+
+  const copySelected = () => {
+    const active = editor?.canvas.getActiveObject();
+    if (!active) return;
+
+    active.clone().then((cloned: fabric.Object) => {
+      clipboardRef.current = cloned;
+    });
+  };
+
+  const pasteFromClipboard = () => {
+    if (!editor || !clipboardRef.current) return;
+
+    clipboardRef.current.clone().then((cloned: fabric.Object) => {
+      editor.canvas.discardActiveObject();
+      cloned.set({
+        left: (cloned.left ?? 0) + 24,
+        top: (cloned.top ?? 0) + 24,
+      });
+      editor.canvas.add(cloned);
+      editor.canvas.setActiveObject(cloned);
+      editor.canvas.requestRenderAll();
+    });
+  };
+
+  const reorderSelected = (action: 'front' | 'back' | 'forward' | 'backward') => {
+    if (!editor) return;
+    const active = editor.canvas.getActiveObject();
+    if (!active) return;
+
+    const canvas = editor.canvas;
+    if (action === 'front') canvas.bringObjectToFront(active);
+    if (action === 'back') canvas.sendObjectToBack(active);
+    if (action === 'forward') canvas.bringObjectForward(active);
+    if (action === 'backward') canvas.sendObjectBackwards(active);
+
+    canvas.requestRenderAll();
+    pushHistory();
+  };
+
+  const setBackgroundColor = (color: string) => {
+    if (!editor) return;
+    setBgColor(color);
+    editor.canvas.backgroundColor = color;
+    editor.canvas.requestRenderAll();
+    pushHistory();
+  };
+
+  const clearCanvas = () => {
+    if (!editor) return;
+    if (!window.confirm('یک کانواس جدید شروع بشه؟ همه چیز پاک می‌شه.')) return;
+
+    editor.canvas.clear();
+    editor.canvas.backgroundColor = bgColor;
+    editor.canvas.requestRenderAll();
+    historyRef.current = { stack: [], index: -1 };
+    pushHistory();
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        const activeObject = editor?.canvas.getActiveObject();
-        if ((activeObject as any)?.isEditing) return;
+      const activeObject = editor?.canvas.getActiveObject();
+      const isTyping = (activeObject as any)?.isEditing;
 
+      if ((e.key === 'Delete' || e.key === 'Backspace') && !isTyping) {
         deleteSelected();
+        return;
+      }
+
+      if (isTyping) return;
+
+      const meta = e.ctrlKey || e.metaKey;
+
+      if (meta && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+
+      if (meta && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+        return;
+      }
+
+      if (meta && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        duplicateSelected();
+        return;
+      }
+
+      if (meta && e.key.toLowerCase() === 'c') {
+        copySelected();
+        return;
+      }
+
+      if (meta && e.key.toLowerCase() === 'v') {
+        pasteFromClipboard();
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        editor?.canvas.discardActiveObject();
+        editor?.canvas.requestRenderAll();
+        return;
+      }
+
+      if (
+        activeObject &&
+        ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)
+      ) {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+
+        if (e.key === 'ArrowUp') activeObject.set({ top: (activeObject.top ?? 0) - step });
+        if (e.key === 'ArrowDown') activeObject.set({ top: (activeObject.top ?? 0) + step });
+        if (e.key === 'ArrowLeft') activeObject.set({ left: (activeObject.left ?? 0) - step });
+        if (e.key === 'ArrowRight') activeObject.set({ left: (activeObject.left ?? 0) + step });
+
+        activeObject.setCoords();
+        editor?.canvas.requestRenderAll();
+
+        if (nudgeTimeoutRef.current) clearTimeout(nudgeTimeoutRef.current);
+        nudgeTimeoutRef.current = setTimeout(() => pushHistory(), 400);
       }
     };
 
@@ -187,12 +434,60 @@ const CanvasEditor = () => {
     if (!editor) return;
     const canvas = editor.canvas;
 
+    const updateSelection = () => {
+      setSelected(canvas.getActiveObject() ?? null);
+      setSelectionTick((t) => t + 1);
+    };
+    const clearSelection = () => setSelected(null);
+    const handleChange = () => pushHistory();
+
+    canvas.on('selection:created', updateSelection);
+    canvas.on('selection:updated', updateSelection);
+    canvas.on('selection:cleared', clearSelection);
+    canvas.on('object:added', handleChange);
+    canvas.on('object:modified', handleChange);
+    canvas.on('object:removed', handleChange);
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      isRestoringRef.current = true;
+      canvas
+        .loadFromJSON(JSON.parse(saved))
+        .then(() => {
+          canvas.requestRenderAll();
+          isRestoringRef.current = false;
+          setBgColor((canvas.backgroundColor as string) || '#000000');
+          pushHistory();
+        })
+        .catch(() => {
+          isRestoringRef.current = false;
+          pushHistory();
+        });
+    } else {
+      pushHistory();
+    }
+
+    return () => {
+      canvas.off('selection:created', updateSelection);
+      canvas.off('selection:updated', updateSelection);
+      canvas.off('selection:cleared', clearSelection);
+      canvas.off('object:added', handleChange);
+      canvas.off('object:modified', handleChange);
+      canvas.off('object:removed', handleChange);
+    };
+  }, [editor]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const canvas = editor.canvas;
+
     const recalc = () => {
       const isMobile = window.innerWidth < 640;
 
-      const headerSpace = isMobile ? 76 : 96; 
-      const dockSpace = isMobile ? 96 : 32; 
-      const sideSpace = isMobile ? 24 : 220; 
+      const headerSpace = isMobile ? 76 : 96;
+      const dockSpace = isMobile ? 96 : 32;
+      const sideSpace = isMobile ? 24 : 220;
+
       const availableWidth = Math.max(240, window.innerWidth - sideSpace);
       const availableHeight = Math.max(
         180,
@@ -207,7 +502,6 @@ const CanvasEditor = () => {
 
       const width = Math.round(CANVAS_WIDTH * scale);
       const height = Math.round(CANVAS_HEIGHT * scale);
-
       const offsetY = Math.round((headerSpace - dockSpace) / 2);
 
       canvas.setDimensions({ width, height }, { cssOnly: true });
@@ -244,6 +538,26 @@ const CanvasEditor = () => {
   const addText = () => {
     if (!editor) return;
 
+    const text = new fabric.IText('New text...', {
+      left: 100,
+      top: 100,
+      width: 200,
+      fontSize: 24,
+      fill: '#ffffff',
+      editable: true,
+    });
+
+    editor.canvas.add(text);
+    editor.canvas.setActiveObject(text);
+    editor.canvas.renderAll();
+
+    text.enterEditing();
+    text.selectAll();
+  };
+
+  const addTextBox = () => {
+    if (!editor) return;
+
     const text = new fabric.Textbox('New text...', {
       left: 100,
       top: 100,
@@ -263,7 +577,13 @@ const CanvasEditor = () => {
 
   return (
     <div className="flex flex-col items-center gap-6 w-full px-4">
-      <Header onDelete={deleteSelected} onExport={exportImage} />
+      <Header
+        onDelete={deleteSelected}
+        onExport={exportImage}
+        onNewCanvas={clearCanvas}
+        bgColor={bgColor}
+        onBgColorChange={setBackgroundColor}
+      />
 
       <Toolbar
         onAddSquare={addSquare}
@@ -275,7 +595,25 @@ const CanvasEditor = () => {
         onAddImageFromFile={addImageFromFile}
         onAddImageFromUrl={addImageFromUrl}
         onAddText={addText}
+        onAddTextBox={addTextBox}
+        onSetImageShape={setImageShape}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
+
+      {selected && (
+        <PropertiesPanel
+          key={selectionTick}
+          object={selected}
+          onChange={() => editor?.canvas.requestRenderAll()}
+          onCommit={pushHistory}
+          onDuplicate={duplicateSelected}
+          onDelete={deleteSelected}
+          onReorder={reorderSelected}
+        />
+      )}
 
       <div
         style={{
