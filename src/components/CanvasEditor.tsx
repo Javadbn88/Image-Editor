@@ -1,8 +1,10 @@
 import { FabricJSCanvas, useFabricJSEditor } from 'fabricjs-react';
 import * as fabric from 'fabric';
-import Toolbar from '../components/Toolbar';
+
+import Toolbar from './Toolbar';
 import Header from './Header';
 import PropertiesPanel from './PropertiesPanel';
+
 import { useCanvasSelection } from '../hooks/useCanvasSelection';
 import { useCanvasHistory } from '../hooks/useCanvasHistory';
 import { useResponsiveCanvas } from '../hooks/useResponsiveCanvas';
@@ -10,8 +12,8 @@ import { useShapeTools } from '../hooks/useShapeTools';
 import { useImageTools } from '../hooks/useImageTools';
 import { useObjectActions } from '../hooks/useObjectActions';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
-import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../lib/canvas-constants';
 
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../lib/canvas-constants';
 const CanvasEditor = () => {
   const { editor, onReady } = useFabricJSEditor();
 
