@@ -1,6 +1,6 @@
 import { FabricJSCanvas, useFabricJSEditor } from 'fabricjs-react';
 import * as fabric from 'fabric';
-import Toolbar from './Toolbar';
+import Toolbar from '../components/Toolbar';
 import Header from './Header';
 import PropertiesPanel from './PropertiesPanel';
 import { useCanvasSelection } from '../hooks/useCanvasSelection';
