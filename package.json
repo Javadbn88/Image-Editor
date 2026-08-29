@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@vercel/analytics": "^2.0.1",
     "fabric": "^6.9.1",
     "fabricjs-react": "^2.2.0",
     "lucide-react": "^1.34.0",
