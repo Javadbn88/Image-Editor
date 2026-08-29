@@ -86,9 +86,6 @@ const Toolbar = ({
   const tooltipClass =
     "pointer-events-none absolute hidden sm:block left-12 whitespace-nowrap rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-200 opacity-0 shadow-lg transition-all duration-150 group-hover:translate-x-1 group-hover:opacity-100";
 
-  // Shared transition classes for flyout / popover menus.
-  // On mobile they slide up as one panel centered above the bottom dock.
-  // On desktop (sm+) they slide out to the right of the left sidebar.
   const menuBase =
     "absolute w-56 max-w-[88vw] origin-bottom sm:origin-left rounded-2xl border border-zinc-800/80 bg-zinc-950/95 p-2 shadow-[0_16px_50px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-200 ease-out left-1/2 -translate-x-1/2 bottom-[64px] sm:bottom-auto sm:left-[60px] sm:translate-x-0";
 
@@ -286,7 +283,6 @@ const Toolbar = ({
           </button>
         </div>
 
-        {/* Text menu */}
         <div
           className={`${menuBase} sm:top-[104px] ${
             showTextMenu ? menuOpen : menuClosed
