@@ -1,6 +1,6 @@
 import { useFabricJSEditor } from 'fabricjs-react';
 import * as fabric from 'fabric';
-import type { ImageShape } from '../Toolbar';
+import type { ImageShape } from '../components/Toolbar';
 import { buildImageClipPath } from '../lib/image-clip-paths';
 
 type FabricEditor = ReturnType<typeof useFabricJSEditor>['editor'];
