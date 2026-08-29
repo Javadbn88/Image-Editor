@@ -1,6 +1,5 @@
-// Header.tsx
 import { Trash2, Download, FilePlus2, PaintBucket } from "lucide-react";
-
+ 
 interface HeaderProps {
   onDelete: () => void;
   onExport: () => void;

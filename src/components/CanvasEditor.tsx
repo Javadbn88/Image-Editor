@@ -1,6 +1,7 @@
 import { FabricJSCanvas, useFabricJSEditor } from 'fabricjs-react';
 import { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
+import { Group } from 'fabric';
 import Toolbar from './Toolbar';
 import type { ImageShape } from './Toolbar';
 import Header from './Header';
@@ -372,14 +373,22 @@ const CanvasEditor = () => {
     pushHistory();
   };
 
-  const groupSelected = () => {
+const groupSelected = () => {
     if (!editor) return;
+    
     const canvas = editor.canvas;
     const active = canvas.getActiveObject();
     if (!active || active.type !== 'activeselection') return;
 
     const selection = active as fabric.ActiveSelection;
-    const group = selection.toGroup();
+    const objects = selection.getObjects();
+
+    canvas.discardActiveObject();
+    canvas.remove(...objects);
+
+    const group = new Group(objects);
+    canvas.add(group);
+
     canvas.setActiveObject(group);
     canvas.requestRenderAll();
     pushHistory();
