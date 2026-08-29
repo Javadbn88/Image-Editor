@@ -1,5 +1,5 @@
 import * as fabric from 'fabric';
-import type { ImageShape } from '../Toolbar';
+import type { ImageShape } from '../components/Toolbar';
 
 export const buildImageClipPath = (
   shape: ImageShape,
