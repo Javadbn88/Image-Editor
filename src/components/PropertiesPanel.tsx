@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
+
 import {
   IMAGE_FILTERS,
   getImageFilterValue,
@@ -7,8 +8,10 @@ import {
   resetImageFilters,
   setImageFilterValue,
   toggleImageFilter,
-} from '../components/lib/image-filters';
-import type { ImageFilterConfig } from '../components/lib/image-filters';
+} from '../lib/image-filters';
+
+import type { ImageFilterConfig } from '../lib/image-filters';
+
 import {
   ArrowUpToLine,
   ArrowUp,
