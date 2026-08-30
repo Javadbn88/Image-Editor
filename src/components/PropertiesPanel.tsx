@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import {
+  IMAGE_FILTERS,
+  getImageFilterValue,
+  isImageFilterActive,
+  resetImageFilters,
+  setImageFilterValue,
+  toggleImageFilter,
+} from '../components/lib/image-filters';
+import type { ImageFilterConfig } from '../components/lib/image-filters';
+import {
   ArrowUpToLine,
   ArrowUp,
   ArrowDown,
@@ -9,8 +18,13 @@ import {
   Trash2,
   Bold,
   Italic,
+  Check,
   ChevronDown,
+  Contrast,
+  Droplet,
+  Focus,
   Settings2,
+  Sun,
   X,
   AlignLeft,
   AlignCenter,
@@ -23,6 +37,19 @@ import {
   Group,
   Ungroup,
 } from 'lucide-react';
+
+const FILTER_ICONS: Record<string, typeof Sun> = {
+  brightness: Sun,
+  contrast: Contrast,
+  saturation: Droplet,
+  blur: Focus,
+};
+
+const formatFilterAmount = (filter: ImageFilterConfig, value: number) => {
+  const percent = Math.round(value * 100);
+  if (filter.kind === 'range' && filter.min < 0 && percent > 0) return `+${percent}%`;
+  return `${percent}%`;
+};
 
 interface PropertiesPanelProps {
   object: fabric.Object;
@@ -82,6 +109,44 @@ const PropertiesPanel = ({
     mutate();
     onChange();
     onCommit();
+  };
+
+  const [filterValues, setFilterValues] = useState<Record<string, number>>(() => {
+    if (type !== 'image') return {};
+    const image = object as fabric.FabricImage;
+    const values: Record<string, number> = {};
+    IMAGE_FILTERS.forEach((filter) => {
+      values[filter.id] =
+        filter.kind === 'range'
+          ? getImageFilterValue(image, filter.id)
+          : isImageFilterActive(image, filter.id)
+            ? 1
+            : 0;
+    });
+    return values;
+  });
+
+  const hasActiveFilters = Object.values(filterValues).some((value) => value !== 0);
+
+  const setRangeFilter = (filter: ImageFilterConfig, value: number) => {
+    setFilterValues((prev) => ({ ...prev, [filter.id]: value }));
+    setImageFilterValue(object as fabric.FabricImage, filter.id, value);
+    onChange();
+  };
+
+  const toggleFilter = (filter: ImageFilterConfig) => {
+    const active = !filterValues[filter.id];
+    setFilterValues((prev) => ({ ...prev, [filter.id]: active ? 1 : 0 }));
+    commit(() => toggleImageFilter(object as fabric.FabricImage, filter.id));
+  };
+
+  const resetFilters = () => {
+    const cleared: Record<string, number> = {};
+    IMAGE_FILTERS.forEach((filter) => {
+      cleared[filter.id] = 0;
+    });
+    setFilterValues(cleared);
+    commit(() => resetImageFilters(object as fabric.FabricImage));
   };
 
   useEffect(() => {
@@ -266,6 +331,78 @@ const PropertiesPanel = ({
                 className="w-28 accent-zinc-300"
                 title={`Opacity: ${Math.round(opacity * 100)}%`}
               />
+            </div>
+          )}
+
+          {isImage && (
+            <div className="mt-1 rounded-xl border border-zinc-800/70 bg-zinc-900/40 p-2.5">
+              <div className="flex items-center justify-between pb-2">
+                <p className={labelClass}>Filters</p>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="text-xs font-medium text-zinc-500 transition-colors duration-150 hover:text-zinc-300"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {IMAGE_FILTERS.filter((filter) => filter.kind === 'range').map((filter) => {
+                  const Icon = FILTER_ICONS[filter.id];
+                  const value = filterValues[filter.id] ?? 0;
+                  return (
+                    <div key={filter.id}>
+                      <div className="flex items-center justify-between pb-1">
+                        <span className="flex items-center gap-1.5 text-sm text-zinc-300">
+                          <Icon size={14} strokeWidth={1.8} className="text-zinc-500" />
+                          {filter.label}
+                        </span>
+                        <span className="text-xs font-medium tabular-nums text-zinc-500">
+                          {formatFilterAmount(filter, value)}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={filter.min}
+                        max={filter.max}
+                        step={filter.step}
+                        value={value}
+                        onChange={(e) => setRangeFilter(filter, Number(e.target.value))}
+                        onMouseUp={onCommit}
+                        onTouchEnd={onCommit}
+                        className="w-full accent-zinc-300"
+                        aria-label={filter.label}
+                        title={`${filter.label}: ${formatFilterAmount(filter, value)}`}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-zinc-800/70 pt-2.5">
+                {IMAGE_FILTERS.filter((filter) => filter.kind === 'toggle').map((filter) => {
+                  const active = Boolean(filterValues[filter.id]);
+                  return (
+                    <button
+                      key={filter.id}
+                      type="button"
+                      onClick={() => toggleFilter(filter)}
+                      aria-pressed={active}
+                      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-all duration-150 touch-manipulation ${
+                        active
+                          ? 'border-transparent bg-white text-zinc-900'
+                          : 'border-zinc-700/80 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'
+                      }`}
+                    >
+                      {active && <Check size={12} strokeWidth={2.5} />}
+                      {filter.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
