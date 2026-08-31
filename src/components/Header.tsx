@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Trash2,
   Download,
@@ -8,7 +9,7 @@ import {
 
 interface HeaderProps {
   onDelete: () => void;
-  onExport: () => void;
+  onExport: (fileName: string) => void;
   onNewCanvas: () => void;
   bgColor: string;
   onBgColorChange: (color: string) => void;
@@ -21,6 +22,17 @@ const Header = ({
   bgColor,
   onBgColorChange,
 }: HeaderProps) => {
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [fileName, setFileName] = useState("image-editor-export");
+  const handleExport = () => {
+    const trimmedFileName = fileName.trim();
+
+    if (!trimmedFileName) return;
+
+    onExport(trimmedFileName);
+    setIsExportOpen(false);
+  };
+
   return (
     <header
       className="
@@ -44,7 +56,6 @@ const Header = ({
           </span>
         </div>
 
-        {/* GitHub */}
         <a
           href="https://github.com/Javadbn88/Image-Editor.git"
           target="_blank"
@@ -59,12 +70,10 @@ const Header = ({
             px-1.5
             text-zinc-300
             transition-all duration-300 ease-out
-
             hover:border-violet-500/40
             hover:bg-violet-500/10
             hover:text-violet-300
             hover:shadow-[0_0_100px_rgba(139,92,246,0.18)]
-
             active:translate-y-0
             active:scale-95
           "
@@ -79,33 +88,25 @@ const Header = ({
             "
           />
 
-          <span
-            className="
-              text-[11px] font-medium
-              transition-colors 
-              sm:block
-            "
-          >
+          <span className="text-[11px] font-medium transition-colors sm:block">
             GitHub
           </span>
 
-          {/* Inner glow */}
+          
           <span
             className="
               pointer-events-none absolute inset-0
               rounded-lg
               opacity-0
               shadow-[inset_0_0_12px_rgba(139,92,246,0.08)]
-              transition-opacity 
+              transition-opacity
               group-hover:opacity-100
             "
           />
         </a>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex items-center justify-end gap-0.5">
-        {/* New Canvas */}
+      <div className="relative flex items-center justify-end gap-0.5">
         <button
           type="button"
           onClick={onNewCanvas}
@@ -131,7 +132,6 @@ const Header = ({
           />
         </button>
 
-        {/* Background Color */}
         <label
           className="
             group relative flex h-9 w-9
@@ -168,7 +168,6 @@ const Header = ({
           />
         </label>
 
-        {/* Delete */}
         <button
           type="button"
           onClick={onDelete}
@@ -196,11 +195,11 @@ const Header = ({
           />
         </button>
 
-        {/* Export */}
         <button
           type="button"
-          onClick={onExport}
+          onClick={() => setIsExportOpen((prev) => !prev)}
           aria-label="Export image"
+          aria-expanded={isExportOpen}
           className="
             group flex h-9 w-9 items-center justify-center
             rounded-xl
@@ -223,6 +222,101 @@ const Header = ({
             "
           />
         </button>
+
+               {isExportOpen && (
+          <div
+            className="
+              absolute right-0 top-12
+              w-64
+              rounded-xl
+              border border-zinc-800
+              bg-zinc-950
+              p-3
+              shadow-[0_16px_40px_rgba(0,0,0,0.45)]
+            "
+          >
+            {/* Form Header */}
+            <div className="mb-3">
+              <p className="text-sm font-medium text-zinc-200">
+                Export as PNG
+              </p>
+
+              <p className="mt-1 text-[11px] text-zinc-500">
+                The exported file will contain only the canvas.
+              </p>
+            </div>
+
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                handleExport();
+              }}
+            >
+            
+              <label
+                htmlFor="export-file-name"
+                className="
+                  mb-1.5 block
+                  text-[11px]
+                  font-medium
+                  text-zinc-400
+                "
+              >
+                File name
+              </label>
+
+              <div
+                className="
+                  flex items-center
+                  rounded-lg
+                  border border-zinc-800
+                  bg-zinc-900/80
+                  px-2.5
+                  focus-within:border-zinc-700
+                "
+              >
+                <input
+                  id="export-file-name"
+                  type="text"
+                  value={fileName}
+                  onChange={(event) => setFileName(event.target.value)}
+                  placeholder="image-editor-export"
+                  autoFocus
+                  className="
+                    min-w-0 flex-1
+                    bg-transparent
+                    py-2
+                    text-xs
+                    text-zinc-200
+                    outline-none
+                    placeholder:text-zinc-600
+                  "
+                />
+
+                <span className="text-xs text-zinc-600">.png</span>
+              </div>
+
+              <button
+                type="submit"
+                disabled={!fileName.trim()}
+                className="
+                  mt-3 w-full
+                  rounded-lg
+                  bg-zinc-100
+                  px-3 py-2
+                  text-xs font-medium
+                  text-zinc-950
+                  transition-colors
+                  hover:bg-white
+                  disabled:cursor-not-allowed
+                  disabled:opacity-40
+                "
+              >
+                Export PNG
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </header>
   );
