@@ -200,14 +200,6 @@ For example:
 
 ---
 
-## 📸 Preview
-
-### Editor
-
-![Image Editor](./screenshots/Screenshot-1.png)
-
----
-
 ## 🚀 Getting Started
 
 ### 1. Clone the repository
