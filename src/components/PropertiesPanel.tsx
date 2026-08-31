@@ -8,7 +8,7 @@ import {
   setImageFilterValue,
   toggleImageFilter,
 } from '../lib/image-filters';
-import type { ImageFilterConfig } from '../components/lib/image-filters';
+import type { ImageFilterConfig } from '../lib/image-filters';
 import {
   ArrowUpToLine,
   ArrowUp,
