@@ -365,27 +365,6 @@ The main goals of the project are:
 
 ---
 
-## 🔮 Future Improvements
-
-Potential improvements for future versions include:
-
-* [ ] Layer management panel
-* [ ] Crop tool
-* [ ] Image rotation controls
-* [ ] Canvas zoom controls
-* [ ] Image resizing
-* [ ] JPEG export
-* [ ] WebP export
-* [ ] Export quality controls
-* [ ] Transparent background export
-* [ ] More advanced text controls
-* [ ] More image filters
-* [ ] Improved accessibility
-* [ ] Automated unit and component tests
-* [ ] GitHub Actions CI pipeline
-
----
-
 ## 📁 Repository
 
 **GitHub:**
