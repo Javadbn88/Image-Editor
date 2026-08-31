@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
-
 import {
   IMAGE_FILTERS,
   getImageFilterValue,
@@ -8,10 +7,8 @@ import {
   resetImageFilters,
   setImageFilterValue,
   toggleImageFilter,
-} from '../lib/image-filters';
-
-import type { ImageFilterConfig } from '../lib/image-filters';
-
+} from '../components/lib/image-filters';
+import type { ImageFilterConfig } from '../components/lib/image-filters';
 import {
   ArrowUpToLine,
   ArrowUp,
@@ -103,10 +100,9 @@ const PropertiesPanel = ({
   const fontWeight = anyObj.fontWeight ?? 'normal';
   const fontStyle = anyObj.fontStyle ?? 'normal';
 
-  const labelClass = 'text-xs font-medium text-zinc-500';
-  const rowClass = 'flex items-center justify-between gap-3 py-1.5';
-  const iconButton =
-    'flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 transition-all duration-150 hover:bg-zinc-800/80 hover:text-white active:scale-90 active:bg-zinc-800 touch-manipulation';
+  const labelClass = 'text-xs font-medium text-zinc-400';
+  const rowClass = 'flex items-center justify-between gap-3 py-2';
+  const iconButton = 'flex h-9 w-9 items-center justify-center rounded-2xl text-zinc-400 transition-all duration-200 hover:bg-zinc-900 hover:text-white active:scale-95 active:bg-zinc-800 touch-manipulation';
 
   const commit = (mutate: () => void) => {
     mutate();
@@ -201,8 +197,8 @@ const PropertiesPanel = ({
         onClick={() => setMobileExpanded((prev) => !prev)}
         className={`
           sm:hidden fixed z-50 left-1/2 -translate-x-1/2
-          flex items-center gap-1.5 rounded-full
-          border border-zinc-700/80 bg-zinc-950/95 px-4 py-2.5
+          flex items-center gap-2.5 rounded-full
+          border border-zinc-700/80 bg-zinc-950/95 px-5 py-2.5
           text-xs font-medium text-zinc-200
           shadow-[0_8px_28px_rgba(0,0,0,0.45)] backdrop-blur-xl
           active:scale-95 touch-manipulation
@@ -227,9 +223,9 @@ const PropertiesPanel = ({
         className={`
           fixed z-50
           left-0 right-0 bottom-0
-          sm:left-auto sm:right-5 sm:top-24 sm:bottom-auto sm:w-64
+          sm:left-auto sm:right-5 sm:top-24 sm:bottom-auto sm:w-72
           flex flex-col
-          rounded-t-2xl sm:rounded-2xl
+          rounded-t-3xl sm:rounded-3xl
           border border-zinc-800/80 border-b-0 sm:border-b
           bg-zinc-950/98 sm:bg-zinc-950/95
           shadow-[0_-12px_40px_rgba(0,0,0,0.5)] sm:shadow-[0_16px_50px_rgba(0,0,0,0.4)]
@@ -258,13 +254,13 @@ const PropertiesPanel = ({
           </div>
         </div>
 
-        <p className={`${labelClass} hidden sm:block px-3 pt-3 pb-1`}>Style</p>
+        <p className={`${labelClass} hidden sm:block px-4 pt-4 pb-1`}>Style</p>
 
         <div
           ref={scrollRef}
           className="
             flex-1 overflow-y-auto overscroll-contain
-            px-3 pb-4 sm:pb-3
+            px-4 pb-5 sm:pb-4
             scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent
             [-webkit-overflow-scrolling:touch]
           "
@@ -277,7 +273,7 @@ const PropertiesPanel = ({
                 type="color"
                 defaultValue={fill}
                 onChange={(e) => commit(() => object.set({ fill: e.target.value }))}
-                className="h-8 w-11 cursor-pointer rounded-lg border border-zinc-700 bg-transparent"
+                className="h-8 w-11 cursor-pointer rounded-2xl border border-zinc-700 bg-transparent"
                 title="Fill color"
               />
             </div>
@@ -290,7 +286,7 @@ const PropertiesPanel = ({
                 type="color"
                 defaultValue={stroke}
                 onChange={(e) => commit(() => object.set({ stroke: e.target.value }))}
-                className="h-8 w-11 cursor-pointer rounded-lg border border-zinc-700 bg-transparent"
+                className="h-8 w-11 cursor-pointer rounded-2xl border border-zinc-700 bg-transparent"
                 title="Stroke color"
               />
             </div>
@@ -338,8 +334,8 @@ const PropertiesPanel = ({
           )}
 
           {isImage && (
-            <div className="mt-1 rounded-xl border border-zinc-800/70 bg-zinc-900/40 p-2.5">
-              <div className="flex items-center justify-between pb-2">
+            <div className="mt-1 rounded-3xl border border-zinc-800/70 bg-zinc-900/40 p-3">
+              <div className="flex items-center justify-between pb-3">
                 <p className={labelClass}>Filters</p>
                 {hasActiveFilters && (
                   <button
@@ -352,15 +348,15 @@ const PropertiesPanel = ({
                 )}
               </div>
 
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 {IMAGE_FILTERS.filter((filter) => filter.kind === 'range').map((filter) => {
                   const Icon = FILTER_ICONS[filter.id];
                   const value = filterValues[filter.id] ?? 0;
                   return (
                     <div key={filter.id}>
-                      <div className="flex items-center justify-between pb-1">
-                        <span className="flex items-center gap-1.5 text-sm text-zinc-300">
-                          <Icon size={14} strokeWidth={1.8} className="text-zinc-500" />
+                      <div className="flex items-center justify-between pb-1.5">
+                        <span className="flex items-center gap-2 text-sm text-zinc-300">
+                          <Icon size={15} strokeWidth={1.8} className="text-zinc-500" />
                           {filter.label}
                         </span>
                         <span className="text-xs font-medium tabular-nums text-zinc-500">
@@ -385,7 +381,7 @@ const PropertiesPanel = ({
                 })}
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-zinc-800/70 pt-2.5">
+              <div className="mt-4 flex flex-wrap items-center gap-1.5 border-t border-zinc-800/70 pt-3">
                 {IMAGE_FILTERS.filter((filter) => filter.kind === 'toggle').map((filter) => {
                   const active = Boolean(filterValues[filter.id]);
                   return (
@@ -394,13 +390,13 @@ const PropertiesPanel = ({
                       type="button"
                       onClick={() => toggleFilter(filter)}
                       aria-pressed={active}
-                      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-all duration-150 touch-manipulation ${
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-all duration-150 touch-manipulation ${
                         active
                           ? 'border-transparent bg-white text-zinc-900'
                           : 'border-zinc-700/80 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'
                       }`}
                     >
-                      {active && <Check size={12} strokeWidth={2.5} />}
+                      {active && <Check size={13} strokeWidth={2.5} />}
                       {filter.label}
                     </button>
                   );
@@ -411,13 +407,13 @@ const PropertiesPanel = ({
 
           {isText && (
             <>
-              <p className={`${labelClass} pb-2 pt-3`}>Text</p>
+              <p className={`${labelClass} pb-3 pt-4`}>Text</p>
               <div className={rowClass}>
                 <span className="text-sm text-zinc-300">Font</span>
                 <select
                   defaultValue={fontFamily}
                   onChange={(e) => commit(() => object.set({ fontFamily: e.target.value } as any))}
-                  className="w-28 rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-200"
+                  className="w-28 rounded-2xl border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-200"
                 >
                   {FONT_OPTIONS.map((font) => (
                     <option key={font} value={font}>
@@ -436,10 +432,10 @@ const PropertiesPanel = ({
                   onChange={(e) =>
                     commit(() => object.set({ fontSize: Number(e.target.value) } as any))
                   }
-                  className="w-20 rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-200"
+                  className="w-20 rounded-2xl border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-200"
                 />
               </div>
-              <div className="flex items-center gap-2 py-1.5">
+              <div className="flex items-center gap-2 py-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -453,7 +449,7 @@ const PropertiesPanel = ({
                   aria-label="Bold"
                   title="Bold"
                 >
-                  <Bold size={16} strokeWidth={1.8} />
+                  <Bold size={17} strokeWidth={1.8} />
                 </button>
                 <button
                   type="button"
@@ -468,14 +464,14 @@ const PropertiesPanel = ({
                   aria-label="Italic"
                   title="Italic"
                 >
-                  <Italic size={16} strokeWidth={1.8} />
+                  <Italic size={17} strokeWidth={1.8} />
                 </button>
               </div>
             </>
           )}
 
-          <p className={`${labelClass} pb-2 pt-3`}>Align</p>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <p className={`${labelClass} pb-3 pt-4`}>Align</p>
+          <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={() => onAlign('left')} className={iconButton} aria-label="Align left" title="Align left">
               <AlignLeft size={16} strokeWidth={1.8} />
             </button>
@@ -496,8 +492,8 @@ const PropertiesPanel = ({
             </button>
           </div>
 
-          <p className={`${labelClass} pb-2 pt-3`}>Flip</p>
-          <div className="flex items-center gap-1.5">
+          <p className={`${labelClass} pb-3 pt-4`}>Flip</p>
+          <div className="flex items-center gap-2">
             <button type="button" onClick={() => onFlip('x')} className={iconButton} aria-label="Flip horizontal" title="Flip horizontal">
               <FlipHorizontal size={16} strokeWidth={1.8} />
             </button>
@@ -508,8 +504,8 @@ const PropertiesPanel = ({
 
           {(isActiveSelection || isGroup) && (
             <>
-              <p className={`${labelClass} pb-2 pt-3`}>Group</p>
-              <div className="flex items-center gap-1.5">
+              <p className={`${labelClass} pb-3 pt-4`}>Group</p>
+              <div className="flex items-center gap-2">
                 {isActiveSelection && (
                   <button type="button" onClick={onGroup} className={iconButton} aria-label="Group" title="Group (Ctrl+G)">
                     <Group size={16} strokeWidth={1.8} />
@@ -524,8 +520,8 @@ const PropertiesPanel = ({
             </>
           )}
 
-          <p className={`${labelClass} pb-2 pt-3`}>Layer</p>
-          <div className="flex items-center gap-1.5">
+          <p className={`${labelClass} pb-3 pt-4`}>Layer</p>
+          <div className="flex items-center gap-2">
             <button type="button" onClick={() => onReorder('front')} className={iconButton} aria-label="Bring to front" title="Bring to front">
               <ArrowUpToLine size={16} strokeWidth={1.8} />
             </button>
@@ -540,7 +536,7 @@ const PropertiesPanel = ({
             </button>
           </div>
 
-          <div className="mt-3 flex items-center gap-1.5 border-t border-zinc-800 pt-3">
+          <div className="mt-4 flex items-center gap-2 border-t border-zinc-800 pt-4">
             <button type="button" onClick={handleDuplicate} className={iconButton} aria-label="Duplicate" title="Duplicate (Ctrl+D)">
               <Copy size={16} strokeWidth={1.8} />
             </button>
