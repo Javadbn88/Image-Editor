@@ -17,11 +17,21 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../lib/canvas-constants';
 
+const DESKTOP_PANEL_TOP = 96; 
+const DESKTOP_PANEL_GAP = 12;
+
+type MobilePanel = "layers" | "properties" | null;
+
 const CanvasEditor = () => {
   const { editor, onReady } = useFabricJSEditor();
 
   const [layerObjects, setLayerObjects] =
     useState<fabric.Object[]>([]);
+
+  const [activeMobilePanel, setActiveMobilePanel] =
+    useState<MobilePanel>(null);
+
+  const [layerPanelHeight, setLayerPanelHeight] = useState(0);
 
   const {
     selected,
@@ -96,6 +106,10 @@ const CanvasEditor = () => {
       canvas.off("object:modified", updateLayers);
     };
   }, [editor]);
+
+  useEffect(() => {
+    setActiveMobilePanel((prev) => (prev === "properties" ? null : prev));
+  }, [selectionTick]);
 
   useKeyboardShortcuts({
     editor,
@@ -244,6 +258,11 @@ const CanvasEditor = () => {
         onDelete={
           handleLayerDelete
         }
+        mobileOpen={activeMobilePanel === "layers"}
+        onMobileOpenChange={(open) =>
+          setActiveMobilePanel(open ? "layers" : null)
+        }
+        onDesktopHeightChange={setLayerPanelHeight}
       />
 
       <Toolbar
@@ -314,6 +333,15 @@ const CanvasEditor = () => {
           }
           onUngroup={
             objectActions.ungroupSelected
+          }
+          mobileOpen={activeMobilePanel === "properties"}
+          onMobileOpenChange={(open) =>
+            setActiveMobilePanel(open ? "properties" : null)
+          }
+          desktopTop={
+            DESKTOP_PANEL_TOP +
+            layerPanelHeight +
+            DESKTOP_PANEL_GAP
           }
         />
       )}
