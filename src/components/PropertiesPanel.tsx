@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import * as fabric from 'fabric';
 import {
   IMAGE_FILTERS,
@@ -45,6 +46,13 @@ const FILTER_ICONS: Record<string, typeof Sun> = {
   blur: Focus,
 };
 
+const FILTER_ICONS: Record<string, typeof Sun> = {
+  brightness: Sun,
+  contrast: Contrast,
+  saturation: Droplet,
+  blur: Focus,
+};
+
 const formatFilterAmount = (filter: ImageFilterConfig, value: number) => {
   const percent = Math.round(value * 100);
   if (filter.kind === 'range' && filter.min < 0 && percent > 0) return `+${percent}%`;
@@ -62,9 +70,14 @@ interface PropertiesPanelProps {
   onFlip: (axis: 'x' | 'y') => void;
   onGroup: () => void;
   onUngroup: () => void;
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+  desktopTop?: number;
 }
 
 const FONT_OPTIONS = ['Arial', 'Georgia', 'Courier New', 'Times New Roman', 'Verdana'];
+
+const DEFAULT_DESKTOP_TOP = 96; 
 
 const PropertiesPanel = ({
   object,
@@ -77,8 +90,10 @@ const PropertiesPanel = ({
   onFlip,
   onGroup,
   onUngroup,
+  mobileOpen,
+  onMobileOpenChange,
+  desktopTop,
 }: PropertiesPanelProps) => {
-  const [mobileExpanded, setMobileExpanded] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -149,28 +164,24 @@ const PropertiesPanel = ({
   };
 
   useEffect(() => {
-    setMobileExpanded(false);
-  }, [object]);
-
-  useEffect(() => {
-    if (!mobileExpanded) return;
+    if (!mobileOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [mobileExpanded]);
+  }, [mobileOpen]);
 
   useEffect(() => {
-    if (!mobileExpanded) return;
+    if (!mobileOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMobileExpanded(false);
+      if (e.key === 'Escape') onMobileOpenChange(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [mobileExpanded]);
+  }, [mobileOpen, onMobileOpenChange]);
 
-  const closeMobile = () => setMobileExpanded(false);
+  const closeMobile = () => onMobileOpenChange(false);
 
   const handleDuplicate = () => {
     onDuplicate();
@@ -182,11 +193,16 @@ const PropertiesPanel = ({
     closeMobile();
   };
 
+  const panelStyle: CSSProperties = {
+    maxHeight: 'min(58vh, 420px)',
+    ['--pp-top' as any]: `${desktopTop ?? DEFAULT_DESKTOP_TOP}px`,
+  };
+
   return (
     <>
-      {mobileExpanded && (
+      {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] sm:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/40 sm:hidden animate-in fade-in duration-200"
           onClick={closeMobile}
           aria-hidden="true"
         />
@@ -194,18 +210,18 @@ const PropertiesPanel = ({
 
       <button
         type="button"
-        onClick={() => setMobileExpanded((prev) => !prev)}
+        onClick={() => onMobileOpenChange(!mobileOpen)}
         className={`
-          sm:hidden fixed z-50 left-1/2 -translate-x-1/2
-          flex items-center gap-2.5 rounded-full
+          sm:hidden fixed z-[20] 
+          flex gap-2.5 rounded-full
           border border-zinc-700/80 bg-zinc-950/95 px-5 py-2.5
           text-xs font-medium text-zinc-200
           shadow-[0_8px_28px_rgba(0,0,0,0.45)] backdrop-blur-xl
           active:scale-95 touch-manipulation
           transition-all duration-200
-          ${mobileExpanded ? 'bottom-[min(58vh,420px)] opacity-0 pointer-events-none' : 'bottom-[108px] opacity-100'}
+          ${mobileOpen ? 'bottom-[min(58vh,420px)] opacity-0 pointer-events-none' : 'bottom-[108px] opacity-100'}
         `}
-        aria-expanded={mobileExpanded}
+        aria-expanded={mobileOpen}
         aria-controls="properties-panel"
       >
         <Settings2 size={15} strokeWidth={1.9} />
@@ -213,7 +229,7 @@ const PropertiesPanel = ({
         <ChevronDown
           size={14}
           strokeWidth={1.9}
-          className={`transition-transform duration-200 ${mobileExpanded ? 'rotate-180' : ''}`}
+          className={`transition-transform duration-200 ${mobileOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -221,9 +237,9 @@ const PropertiesPanel = ({
         id="properties-panel"
         ref={panelRef}
         className={`
-          fixed z-50
+          fixed z-[60]
           left-0 right-0 bottom-0
-          sm:left-auto sm:right-5 sm:top-24 sm:bottom-auto sm:w-72
+          sm:left-auto sm:right-5 sm:top-[var(--pp-top)] sm:bottom-auto sm:w-72
           flex flex-col
           rounded-t-3xl sm:rounded-3xl
           border border-zinc-800/80 border-b-0 sm:border-b
@@ -232,12 +248,12 @@ const PropertiesPanel = ({
           backdrop-blur-xl
           transition-all duration-250 ease-out
           ${
-            mobileExpanded
+            mobileOpen
               ? 'translate-y-0 opacity-100 pointer-events-auto'
               : 'translate-y-full opacity-0 pointer-events-none sm:translate-y-0 sm:opacity-100 sm:pointer-events-auto'
           }
         `}
-        style={{ maxHeight: 'min(58vh, 420px)' }}
+        style={panelStyle}
       >
         <div className="sm:hidden flex flex-col items-center pt-2.5 pb-1 shrink-0">
           <div className="h-1 w-10 rounded-full bg-zinc-700/80 mb-2" />
