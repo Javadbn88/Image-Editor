@@ -8,8 +8,8 @@ import {
   resetImageFilters,
   setImageFilterValue,
   toggleImageFilter,
-} from '../lib/image-filters';
-import type { ImageFilterConfig } from '../lib/image-filters';
+} from '../components/lib/image-filters';
+import type { ImageFilterConfig } from '../components/lib/image-filters';
 import {
   ArrowUpToLine,
   ArrowUp,
@@ -38,13 +38,6 @@ import {
   Group,
   Ungroup,
 } from 'lucide-react';
-
-const FILTER_ICONS: Record<string, typeof Sun> = {
-  brightness: Sun,
-  contrast: Contrast,
-  saturation: Droplet,
-  blur: Focus,
-};
 
 const FILTER_ICONS: Record<string, typeof Sun> = {
   brightness: Sun,
