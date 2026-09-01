@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as fabric from "fabric";
 import {
   ArrowDownToLine,
@@ -20,7 +20,20 @@ interface LayerPanelProps {
   onSendToBack: (object: fabric.Object) => void;
   onToggleLock: (object: fabric.Object) => void;
   onDelete: (object: fabric.Object) => void;
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+  onDesktopHeightChange?: (height: number) => void;
 }
+
+const MAX_VISIBLE_LAYERS = 5;
+const LAYER_ROW_HEIGHT = 44; 
+const LAYER_ROW_GAP = 4; 
+const LAYER_LIST_PADDING = 16;
+
+const LAYER_LIST_MAX_HEIGHT =
+  MAX_VISIBLE_LAYERS * LAYER_ROW_HEIGHT +
+  (MAX_VISIBLE_LAYERS - 1) * LAYER_ROW_GAP +
+  LAYER_LIST_PADDING;
 
 const getLayerName = (object: fabric.Object, index: number) => {
   const names: Record<string, string> = {
@@ -48,8 +61,11 @@ const LayerPanel = ({
   onSendToBack,
   onToggleLock,
   onDelete,
+  mobileOpen,
+  onMobileOpenChange,
+  onDesktopHeightChange,
 }: LayerPanelProps) => {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -67,7 +83,7 @@ const LayerPanel = ({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setMobileOpen(false);
+        onMobileOpenChange(false);
       }
     };
 
@@ -76,25 +92,38 @@ const LayerPanel = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [mobileOpen]);
+  }, [mobileOpen, onMobileOpenChange]);
 
   const layers = useMemo(() => [...objects].reverse(), [objects]);
+
+  useEffect(() => {
+    const node = panelRef.current;
+    if (!node || !onDesktopHeightChange) return;
+
+    const reportHeight = () => onDesktopHeightChange(node.offsetHeight);
+    reportHeight();
+
+    const observer = new ResizeObserver(() => reportHeight());
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, [onDesktopHeightChange, layers.length]);
 
   return (
     <>
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] sm:hidden"
-          onClick={() => setMobileOpen(false)}
+          className="fixed inset-0 z-50 bg-black/40 sm:hidden"
+          onClick={() => onMobileOpenChange(false)}
           aria-hidden="true"
         />
       )}
 
       <button
         type="button"
-        onClick={() => setMobileOpen((open) => !open)}
+        onClick={() => onMobileOpenChange(!mobileOpen)}
         className="
-          fixed bottom-[108px] left-4 z-50
+          fixed bottom-[108px] left-4 z-[60]
           flex h-10 items-center gap-2
           rounded-full
           border border-zinc-700/80
@@ -124,8 +153,9 @@ const LayerPanel = ({
 
       <aside
         id="layer-panel"
+        ref={panelRef}
         className={`
-          fixed z-50
+          fixed z-[60]
           bottom-0 left-0 right-0
           sm:bottom-auto
           sm:left-auto
@@ -166,7 +196,7 @@ const LayerPanel = ({
 
           <button
             type="button"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => onMobileOpenChange(false)}
             className="
               flex h-8 w-8 items-center justify-center
               rounded-lg
@@ -184,8 +214,15 @@ const LayerPanel = ({
         </div>
 
         <div
-          className="overflow-y-auto p-2"
+          className="
+            overflow-y-auto overscroll-contain p-2
+            scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent
+            scrollbar-thumb-rounded-full
+            hover:scrollbar-thumb-zinc-600
+            [-webkit-overflow-scrolling:touch]
+          "
           style={{
+            maxHeight: `${LAYER_LIST_MAX_HEIGHT}px`,
             paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
           }}
         >
@@ -216,10 +253,10 @@ const LayerPanel = ({
                     key={`${name}-${originalIndex}`}
                     className={`
                       group
-                      flex items-center gap-1
+                      flex h-11 shrink-0 items-center gap-1
                       rounded-xl
                       border
-                      px-1.5 py-1.5
+                      px-1.5
                       transition-colors
                       ${
                         isSelected
